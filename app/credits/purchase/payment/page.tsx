@@ -31,6 +31,14 @@ function PaymentContent() {
 
   const handleComplete = (transactionHash: string) => {
     console.log("Transaction completed:", transactionHash);
+    // Navigate to confirmation page with transaction details
+    if (selection && wallet) {
+      const selectionParam = encodeURIComponent(JSON.stringify(selection));
+      const networkParam = wallet.network;
+      router.push(
+        `/credits/purchase/confirmation?selection=${selectionParam}&hash=${transactionHash}&network=${networkParam}`
+      );
+    }
   };
 
   const handleError = (error: string) => {

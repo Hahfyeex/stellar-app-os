@@ -51,13 +51,10 @@ export async function buildPaymentTransaction(
   const sourceAccount = await server.loadAccount(sourcePublicKey);
 
   const usdcAsset = getUsdcAsset(network);
-  const carbonAsset = getCarbonCreditAsset(network);
+  // Test destination address
+  const recipientAddress = "GABEMKJNR4GK7M4FROGA7I7PG63N2CKE3EGDSBSISG56SVL2O3KRNDXA";
 
-  const recipientAddress =
-    network === "mainnet"
-      ? "GDUKMGUGDORQJH6YWY4RHDE6GV3NCYCBN3MORXYL43TSJPCCZFLNOA5H"
-      : "GDUKMGUGDORQJH6YWY4RHDE6GV3NCYCBN3MORXYL43TSJPCCZFLNOA5H";
-
+  // Dev version: Only process payment, skip carbon credit minting (no asset exists yet)
   const transaction = new TransactionBuilder(sourceAccount, {
     fee: "100",
     networkPassphrase,
@@ -67,13 +64,6 @@ export async function buildPaymentTransaction(
         destination: recipientAddress,
         asset: usdcAsset,
         amount: selection.calculatedPrice.toFixed(7),
-      })
-    )
-    .addOperation(
-      Operation.payment({
-        destination: sourcePublicKey,
-        asset: carbonAsset,
-        amount: selection.quantity.toFixed(7),
       })
     )
     .addMemo(Memo.text(idempotencyKey))
@@ -104,10 +94,38 @@ export async function submitTransaction(
   });
 
   if (!response.ok) {
-    const error = (await response.json()) as { extras?: { result_codes?: { transaction?: string } } };
-    throw new Error(
-      error.extras?.result_codes?.transaction || "Transaction submission failed"
-    );
+    const errorData = (await response.json()) as {
+      extras?: {
+        result_codes?: {
+          transaction?: string;
+          operations?: string[];
+        };
+        result_xdr?: string;
+      };
+      detail?: string;
+      type?: string;
+    };
+
+    // Build detailed error message
+    let errorMessage = "Transaction submission failed";
+    
+    if (errorData.extras?.result_codes?.transaction) {
+      errorMessage = `Transaction failed: ${errorData.extras.result_codes.transaction}`;
+      
+      // Add operation-level errors if available
+      if (errorData.extras.result_codes.operations && errorData.extras.result_codes.operations.length > 0) {
+        const operationErrors = errorData.extras.result_codes.operations.filter((op) => op !== "op_success");
+        if (operationErrors.length > 0) {
+          errorMessage += ` (Operations: ${operationErrors.join(", ")})`;
+        }
+      }
+    } else if (errorData.detail) {
+      errorMessage = errorData.detail;
+    } else if (errorData.type) {
+      errorMessage = errorData.type;
+    }
+
+    throw new Error(errorMessage);
   }
 
   const result = (await response.json()) as { hash: string };

@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import { Button } from "@/components/atoms/Button";
-import { Badge } from "@/components/atoms/Badge";
 import { Text } from "@/components/atoms/Text";
 import {
   Card,
@@ -13,7 +12,6 @@ import {
 } from "@/components/molecules/Card";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { signTransactionWithFreighter, signTransactionWithAlbedo } from "@/lib/stellar/signing";
-import { getStellarExplorerUrl } from "@/lib/stellar/transaction";
 import { mockCarbonProjects } from "@/lib/api/mock/carbonProjects";
 import type { PaymentMintingProps, TransactionStatus } from "@/lib/types/payment";
 
@@ -136,60 +134,21 @@ export function PaymentMintingStep({
     selection.calculatedPrice > 0 &&
     parseFloat(wallet.balance.usdc) < selection.calculatedPrice;
 
+  // Show loading state while redirecting to confirmation page
   if (status === "success" && transactionHash) {
     return (
       <div className="space-y-6">
-        <div>
+        <div className="text-center">
+          <div className="flex justify-center mb-4">
+            <div className="h-12 w-12 border-4 border-stellar-green border-t-transparent rounded-full animate-spin" />
+          </div>
           <Text variant="h3" as="h2" className="mb-2">
             Transaction Successful!
           </Text>
           <Text variant="muted" as="p">
-            Your carbon credits have been minted and added to your wallet.
+            Redirecting to confirmation page...
           </Text>
         </div>
-
-        <Card className="border-stellar-green/30 bg-stellar-green/5">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Badge variant="success">Success</Badge>
-              <span>Transaction Complete</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Text variant="small" as="span" className="font-semibold block mb-2">
-                Transaction Hash
-              </Text>
-              <div className="flex items-center gap-2">
-                <Text variant="small" as="span" className="font-mono text-muted-foreground">
-                  {transactionHash.slice(0, 16)}...{transactionHash.slice(-8)}
-                </Text>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (wallet) {
-                      window.open(
-                        getStellarExplorerUrl(transactionHash, wallet.network),
-                        "_blank"
-                      );
-                    }
-                  }}
-                  aria-label="View transaction on Stellar Explorer"
-                >
-                  View on Explorer
-                </Button>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t">
-              <Text variant="small" as="p" className="text-muted-foreground">
-                {selection.quantity.toFixed(2)} tons of carbon credits have been added to your
-                wallet.
-              </Text>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }
