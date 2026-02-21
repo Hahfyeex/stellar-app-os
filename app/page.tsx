@@ -1,6 +1,8 @@
+import Link from "next/link";
 import { Button } from "@/components/atoms/Button";
 import { Text } from "@/components/atoms/Text";
 import { Badge } from "@/components/atoms/Badge";
+import { Counter } from "@/components/atoms/Counter";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/molecules/Card";
 
 export default function Home() {
@@ -14,6 +16,28 @@ export default function Home() {
         </Text>
       </div>
 
+      {/* Platform Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl">
+        <div className="flex flex-col items-center gap-2 p-6 rounded-lg bg-muted/50">
+          <Counter end={1234567} prefix="$" className="text-center" />
+          <Text variant="muted" className="text-sm">
+            Total Credit Issued
+          </Text>
+        </div>
+        <div className="flex flex-col items-center gap-2 p-6 rounded-lg bg-muted/50">
+          <Counter end={5420} className="text-center" />
+          <Text variant="muted" className="text-sm">
+            Active Farmers
+          </Text>
+        </div>
+        <div className="flex flex-col items-center gap-2 p-6 rounded-lg bg-muted/50">
+          <Counter end={98} suffix="%" className="text-center" />
+          <Text variant="muted" className="text-sm">
+            Repayment Rate
+          </Text>
+        </div>
+      </div>
+
       <Card className="w-full max-w-md">
         <CardHeader>
           <CardTitle>Get Started</CardTitle>
@@ -25,8 +49,11 @@ export default function Home() {
           <Button variant="default" size="lg" className="w-full">
             Connect Wallet
           </Button>
-          <Button variant="outline" size="lg" className="w-full">
-            Learn More
+          <Button asChild variant="outline" size="lg" className="w-full">
+            <Link href="/blog">Read our Blog</Link>
+          </Button>
+          <Button asChild variant="outline" size="lg" className="w-full">
+            <Link href="/credits/purchase">Purchase Carbon Credits</Link>
           </Button>
         </CardContent>
       </Card>
