@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { WalletType, NetworkType, WalletConnection, WalletBalance } from "@/lib/types/wallet";
+import type { WalletType, NetworkType, WalletConnection } from "@/lib/types/wallet";
 import {
   connectFreighter,
   connectAlbedo,
