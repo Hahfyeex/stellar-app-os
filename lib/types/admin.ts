@@ -1,6 +1,11 @@
-import type { AdminProjectDetail, AdminProjectLifecycleStatus, AdminProjectType } from '@/lib/api/mock/adminProjects';
+import type { 
+  AdminProjectDetail, 
+  AdminProjectLifecycleStatus, 
+  AdminProjectType,
+  AdminRiskRating 
+} from '@/lib/types/adminProject';
 
-export type { AdminProjectDetail, AdminProjectLifecycleStatus, AdminProjectType };
+export type { AdminProjectDetail, AdminProjectLifecycleStatus, AdminProjectType, AdminRiskRating };
 
 export interface TableRow {
   id: string;
