@@ -154,7 +154,7 @@ export function MarketplaceFilters({
               className="h-7 text-xs"
               aria-label="Clear search filter"
             >
-              Search: "{searchQuery.length > 20 ? searchQuery.slice(0, 20) + '...' : searchQuery}"
+              Search: &quot;{searchQuery.length > 20 ? searchQuery.slice(0, 20) + '...' : searchQuery}&quot;
               <X className="ml-1 h-3 w-3" />
             </Button>
           )}

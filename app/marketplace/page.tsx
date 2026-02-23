@@ -107,21 +107,6 @@ export default function MarketplacePage() {
     [updateUrlParams]
   );
 
-  // Build pagination URL helper
-  const buildPaginationUrl = useCallback(
-    (page: number) => {
-      const params = new URLSearchParams();
-      if (page > 1) params.set('page', page.toString());
-      if (selectedType) params.set('type', selectedType);
-      if (sortBy !== 'date-newest') params.set('sort', sortBy);
-      if (searchQuery) params.set('search', searchQuery);
-
-      const queryString = params.toString();
-      return queryString ? `/marketplace?${queryString}` : '/marketplace';
-    },
-    [selectedType, sortBy, searchQuery]
-  );
-
   return (
     <main className="container mx-auto px-4 py-8 max-w-7xl">
       {/* Header */}
@@ -171,6 +156,7 @@ export default function MarketplacePage() {
             currentPage={data.pagination.currentPage}
             totalPages={data.pagination.totalPages}
             currentCategory={null}
+            onPageChange={handlePageChange}
           />
         </div>
       )}

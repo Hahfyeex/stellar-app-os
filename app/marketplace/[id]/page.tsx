@@ -68,7 +68,7 @@ export default function MarketplaceDetailPage({ params }: MarketplaceDetailPageP
             Listing Not Found
           </Text>
           <Text variant="muted" as="p" className="mb-6">
-            The marketplace listing you're looking for doesn't exist or has been removed.
+            The marketplace listing you&apos;re looking for doesn&apos;t exist or has been removed.
           </Text>
           <Button onClick={() => router.push('/marketplace')} stellar="primary">
             <ArrowLeft className="mr-2 h-4 w-4" />
@@ -81,7 +81,6 @@ export default function MarketplaceDetailPage({ params }: MarketplaceDetailPageP
 
   const handlePurchase = () => {
     // TODO: Implement purchase flow
-    console.log('Initiating purchase for listing:', listing.id);
     alert('Purchase flow not yet implemented');
   };
 

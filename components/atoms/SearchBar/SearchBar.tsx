@@ -48,8 +48,8 @@ export function SearchBar({
   className,
   statusMessage,
 }: SearchBarProps) {
-  const [value, setValue] = useState(initialValue);
-  const debouncedValue = useDebounce(value, debounceDelay);
+  const [_value, setValue] = useState(initialValue);
+  const _debouncedValue = useDebounce(_value, debounceDelay);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Focus with Cmd+K or Ctrl+K
@@ -68,9 +68,9 @@ export function SearchBar({
   // Update effect for debounced value
   useEffect(() => {
     if (onSearch) {
-      onSearch(debouncedValue);
+      onSearch(_debouncedValue);
     }
-  }, [debouncedValue, onSearch]);
+  }, [_debouncedValue, onSearch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
@@ -96,7 +96,7 @@ export function SearchBar({
         <Input
           ref={inputRef}
           type="text"
-          value={value}
+          value={_value}
           onChange={handleInputChange}
           placeholder={placeholder}
           className="pl-10 pr-10 border-stellar-blue/20 hover:border-stellar-blue/40 focus:border-stellar-blue"
@@ -106,7 +106,7 @@ export function SearchBar({
         <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-hidden="true" />
-          ) : value ? (
+          ) : _value ? (
             <button
               type="button"
               onClick={clearSearch}
@@ -125,7 +125,7 @@ export function SearchBar({
 
       {/* ARIA Live region for screen readers */}
       <div className="sr-only" role="status" aria-live="polite">
-        {statusMessage || (value ? `Searching for ${value}` : '')}
+        {statusMessage || (_value ? `Searching for ${_value}` : '')}
       </div>
     </div>
   );

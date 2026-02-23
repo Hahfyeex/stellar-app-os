@@ -134,11 +134,11 @@ export interface MarketplaceFiltersProps {
   searchQuery: string;
 
   /** Callback when project type filter changes */
-  onTypeChange: (type: ProjectType | null) => void;
+  onTypeChange: (_type: ProjectType | null) => void;
 
   /** Callback when sort option changes */
-  onSortChange: (sort: SortOption) => void;
+  onSortChange: (_sort: SortOption) => void;
 
   /** Callback when search query changes */
-  onSearchChange: (query: string) => void;
+  onSearchChange: (_query: string) => void;
 }
