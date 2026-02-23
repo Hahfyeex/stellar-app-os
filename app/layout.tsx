@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { Footer } from '@/components/organisms/Footer/Footer';
+import { ToastProvider } from '@/components/providers/ToastProvider';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -55,7 +56,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        {children}
+        <ToastProvider>{children}</ToastProvider>
         <Footer />
       </body>
     </html>

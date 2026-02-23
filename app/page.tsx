@@ -3,6 +3,8 @@ import { Button } from '@/components/atoms/Button';
 import { Text } from '@/components/atoms/Text';
 import { Badge } from '@/components/atoms/Badge';
 import { Counter } from '@/components/atoms/Counter';
+import { OnboardingTour } from '@/components/organisms/OnboardingTour/OnboardingTour';
+import SocialShareButtons from '@/components/SocialShareButtons';
 import {
   Card,
   CardHeader,
@@ -23,7 +25,10 @@ export default function Home() {
       </div>
 
       {/* Platform Stats */}
-      <div data-tour-id="stats-grid" className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl">
+      <div
+        data-tour-id="stats-grid"
+        className="grid grid-cols-1 sm:grid-cols-3 gap-6 w-full max-w-4xl"
+      >
         <div className="flex flex-col items-center gap-2 p-6 rounded-lg bg-muted/50">
           <Counter end={1234567} prefix="$" className="text-center" />
           <Text variant="muted" className="text-sm">
@@ -50,17 +55,43 @@ export default function Home() {
           <CardDescription>Connect your wallet to access farm credit services.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-3">
-          <Button data-tour-id="connect-wallet-button" variant="default" size="lg" className="w-full">
+          <Button
+            data-tour-id="connect-wallet-button"
+            variant="default"
+            size="lg"
+            className="w-full"
+          >
             Connect Wallet
           </Button>
           <Button asChild variant="outline" size="lg" className="w-full">
             <Link href="/blog">Read our Blog</Link>
           </Button>
-          <Button data-tour-id="purchase-credits-button" asChild variant="outline" size="lg" className="w-full">
+          <Button
+            data-tour-id="purchase-credits-button"
+            asChild
+            variant="outline"
+            size="lg"
+            className="w-full"
+          >
             <Link href="/credits/purchase">Purchase Carbon Credits</Link>
           </Button>
         </CardContent>
       </Card>
+
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Share FarmCredit</CardTitle>
+          <CardDescription>Help spread the word about sustainable agriculture.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SocialShareButtons
+            title="Check out FarmCredit!"
+            description="A decentralized agricultural credit platform built on Stellar"
+            impact="Supporting sustainable farming and equal access to credit"
+          />
+        </CardContent>
+      </Card>
+
       <OnboardingTour />
     </div>
   );
