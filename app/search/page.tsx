@@ -1,6 +1,5 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
 import React, { useState, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ResultHighlight } from '@/components/molecules/ResultHighlight';
@@ -157,9 +156,7 @@ function SearchResultsPageContent(): React.ReactNode {
                       </div>
 
                       {/* Arrow Icon */}
-                      <span className="text-xl text-stellar-blue flex-shrink-0">
-                        <ArrowRight className="w-4 h-4" />
-                      </span>
+                      <span className="text-xl text-stellar-blue shrink-0"><ArrowRight className="w-4 h-4" /></span>
                     </div>
                   </li>
                 ))}

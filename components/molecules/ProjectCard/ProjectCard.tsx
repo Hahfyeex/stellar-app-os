@@ -67,7 +67,7 @@ export function ProjectCard({
 
       <CardHeader className="p-5 pb-3 flex-none">
         <div className="flex items-center space-x-1 text-muted-foreground mb-1.5">
-          <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+          <MapPin className="h-3.5 w-3.5 shrink-0" />
           <Text variant="small" className="truncate text-xs">
             {location}
           </Text>
@@ -81,7 +81,7 @@ export function ProjectCard({
         </Text>
       </CardHeader>
 
-      <CardContent className="p-5 pt-0 flex-grow flex flex-col justify-between">
+      <CardContent className="p-5 pt-0 grow flex flex-col justify-between">
         <Text variant="muted" className="line-clamp-2 mb-4">
           {description}
         </Text>
