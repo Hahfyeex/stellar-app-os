@@ -3,7 +3,9 @@
     "home": "Home",
     "blog": "Blog",
     "purchaseCredits": "Purchase Credits",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "marketplace": "Marketplace"
   },
   "header": {
     "connectWallet": "Connect Wallet",

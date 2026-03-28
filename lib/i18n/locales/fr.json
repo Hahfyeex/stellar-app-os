@@ -3,7 +3,9 @@
     "home": "Accueil",
     "blog": "Blog",
     "purchaseCredits": "Acheter des Crédits",
-    "dashboard": "Tableau de Bord"
+    "dashboard": "Tableau de Bord",
+    "projects": "Projets",
+    "marketplace": "Marché"
   },
   "header": {
     "connectWallet": "Connecter le Portefeuille",

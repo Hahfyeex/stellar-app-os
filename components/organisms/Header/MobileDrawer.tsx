@@ -3,7 +3,7 @@
 import { type JSX, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { X, Home, BookOpen, ShoppingCart, LayoutDashboard } from 'lucide-react';
+import { X, Home, FolderOpen, ShoppingBag, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/atoms/Button';
 import { Text } from '@/components/atoms/Text';
 import { useWalletContext } from '@/contexts/WalletContext';
@@ -13,98 +13,87 @@ import { useAppTranslation } from '@/hooks/useTranslation';
 interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Called when the user taps "Connect Wallet" — opens the WalletModal */
+  onOpenWallet: () => void;
 }
 
-interface NavLink {
-  href: string;
-  labelKey: keyof {
-    'nav.home': string;
-    'nav.blog': string;
-    'nav.purchaseCredits': string;
-    'nav.dashboard': string;
-  };
-  icon: React.ComponentType<{ className?: string }>;
-}
-
-// Only hrefs and icons here — labels come from t() inside the component
-const NAV_LINKS: NavLink[] = [
+const NAV_LINKS = [
   { href: '/', labelKey: 'nav.home', icon: Home },
-  { href: '/blog', labelKey: 'nav.blog', icon: BookOpen },
-  { href: '/credits/purchase', labelKey: 'nav.purchaseCredits', icon: ShoppingCart },
-  { href: '/dashboard/credits', labelKey: 'nav.dashboard', icon: LayoutDashboard },
-];
+  { href: '/projects', labelKey: 'nav.projects', icon: FolderOpen },
+  { href: '/marketplace', labelKey: 'nav.marketplace', icon: ShoppingBag },
+  { href: '/dashboard', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+] as const;
 
-export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps): JSX.Element {
+export function MobileDrawer({ isOpen, onClose, onOpenWallet }: MobileDrawerProps): JSX.Element {
   const pathname = usePathname();
-  const { wallet, connect, disconnect } = useWalletContext();
+  const { wallet, disconnect } = useWalletContext();
   const drawerRef = useRef<HTMLDivElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const { t } = useAppTranslation();
 
-  const handleWalletAction = async (): Promise<void> => {
+  const handleWalletAction = (): void => {
     if (wallet?.publicKey) {
       disconnect();
     } else {
-      await connect('freighter');
+      onClose();
+      onOpenWallet();
     }
-    onClose();
   };
 
-  const handleLinkClick = (): void => {
-    onClose();
-  };
-
-  // Trap focus within drawer when open
+  // Focus trap
   useEffect(() => {
     if (!isOpen) return;
+    closeButtonRef.current?.focus();
 
     const drawer = drawerRef.current;
     if (!drawer) return;
 
-    closeButtonRef.current?.focus();
-
-    const focusableElements = drawer.querySelectorAll<HTMLElement>(
+    const focusable = drawer.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
 
-    const handleTabKey = (event: KeyboardEvent): void => {
-      if (event.key !== 'Tab') return;
-      if (event.shiftKey) {
-        if (document.activeElement === firstElement) {
-          event.preventDefault();
-          lastElement?.focus();
+    const handleTab = (e: KeyboardEvent): void => {
+      if (e.key !== 'Tab') return;
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault();
+          last?.focus();
         }
       } else {
-        if (document.activeElement === lastElement) {
-          event.preventDefault();
-          firstElement?.focus();
+        if (document.activeElement === last) {
+          e.preventDefault();
+          first?.focus();
         }
       }
     };
 
-    drawer.addEventListener('keydown', handleTabKey);
-    return () => drawer.removeEventListener('keydown', handleTabKey);
+    drawer.addEventListener('keydown', handleTab);
+    return () => drawer.removeEventListener('keydown', handleTab);
   }, [isOpen]);
 
-  // Handle escape key
+  // Escape key
   useEffect(() => {
     if (!isOpen) return;
-    const handleEscape = (event: KeyboardEvent): void => {
-      if (event.key === 'Escape') onClose();
+    const handler = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') onClose();
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [isOpen, onClose]);
 
-  // Prevent body scroll when open
+  // Body scroll lock
   useEffect(() => {
     document.body.style.overflow = isOpen ? 'hidden' : '';
     return () => {
       document.body.style.overflow = '';
     };
   }, [isOpen]);
+
+  const walletLabel = wallet?.publicKey
+    ? `${wallet.publicKey.slice(0, 6)}…${wallet.publicKey.slice(-4)}`
+    : t('header.connectWallet');
 
   return (
     <>
@@ -117,15 +106,16 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps): JSX.Elemen
         aria-hidden="true"
       />
 
-      {/* Drawer */}
+      {/* Drawer — slides from the RIGHT */}
       <div
+        id="mobile-nav"
         ref={drawerRef}
-        className={`fixed top-0 left-0 z-50 h-full w-[280px] bg-background border-r border-border shadow-xl transform transition-transform duration-300 ease-in-out md:hidden ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
         role="dialog"
         aria-modal="true"
-        aria-label={t('header.openMenu')}
+        aria-label="Mobile navigation"
+        className={`fixed top-0 right-0 z-50 h-full w-[280px] bg-stellar-navy border-l border-border shadow-xl transform transition-transform duration-300 ease-in-out md:hidden ${
+          isOpen ? 'translate-x-0' : 'translate-x-full'
+        }`}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b border-border">
@@ -135,7 +125,7 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps): JSX.Elemen
           <button
             ref={closeButtonRef}
             type="button"
-            className="inline-flex items-center justify-center rounded-md p-2 text-foreground hover:bg-muted hover:text-stellar-blue focus:outline-none focus:ring-2 focus:ring-inset focus:ring-stellar-blue transition-colors"
+            className="inline-flex items-center justify-center rounded-md p-2 text-white/70 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-stellar-blue transition-colors"
             onClick={onClose}
             aria-label={t('mobile.closeMenu')}
           >
@@ -143,23 +133,23 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps): JSX.Elemen
           </button>
         </div>
 
-        {/* Navigation Links */}
-        <nav className="flex flex-col p-4 space-y-2" aria-label="Main navigation">
+        {/* Navigation */}
+        <nav className="flex flex-col p-4 space-y-1" role="navigation" aria-label="Mobile main navigation">
           {NAV_LINKS.map(({ href, labelKey, icon: Icon }) => {
             const isActive = pathname === href;
             return (
               <Link
                 key={href}
                 href={href}
-                onClick={handleLinkClick}
-                className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
+                onClick={onClose}
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex items-center space-x-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stellar-blue ${
                   isActive
                     ? 'bg-stellar-blue/10 text-stellar-blue'
-                    : 'text-foreground hover:bg-muted hover:text-stellar-blue'
+                    : 'text-white/70 hover:bg-white/10 hover:text-white'
                 }`}
-                aria-current={isActive ? 'page' : undefined}
               >
-                <Icon className="h-5 w-5" aria-hidden="true" />
+                <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
                 <span>{t(labelKey)}</span>
               </Link>
             );
@@ -172,19 +162,17 @@ export function MobileDrawer({ isOpen, onClose }: MobileDrawerProps): JSX.Elemen
         </div>
 
         {/* Wallet Section */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-background">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border bg-stellar-navy">
           <Button
             variant={wallet?.publicKey ? 'outline' : 'default'}
             size="lg"
-            className="w-full"
+            className="w-full font-mono"
             onClick={handleWalletAction}
           >
-            {wallet?.publicKey
-              ? `${wallet.publicKey.slice(0, 4)}...${wallet.publicKey.slice(-4)}`
-              : t('header.connectWallet')}
+            {walletLabel}
           </Button>
           {wallet?.publicKey && (
-            <Text variant="muted" className="text-xs text-center mt-2">
+            <Text variant="muted" className="text-xs text-center mt-2 text-white/50">
               {t('mobile.tapToDisconnect')}
             </Text>
           )}
