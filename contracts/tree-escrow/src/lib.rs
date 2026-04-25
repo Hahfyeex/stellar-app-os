@@ -75,12 +75,13 @@ pub struct TreeEscrow;
 
 #[contractimpl]
 impl TreeEscrow {
-    /// One-time initialisation — sets the verifier/admin address.
-    pub fn initialize(env: Env, admin: Address) {
+    /// One-time initialisation — sets the verifier/admin address and TREE token.
+    pub fn initialize(env: Env, admin: Address, tree_token: Address) {
         if env.storage().instance().has(&symbol_short!("ADMIN")) {
             panic!("already initialized");
         }
         env.storage().instance().set(&symbol_short!("ADMIN"), &admin);
+        env.storage().instance().set(&symbol_short!("TREE"), &tree_token);
     }
 
     /// Donor deposits `amount` of `token` into escrow for `farmer`.
@@ -214,6 +215,12 @@ impl TreeEscrow {
 
         env.storage().persistent().set(&key, &rec);
 
+        // Mint 1 TREE token to the donor for each verified tree
+        let tree_token: Address = env.storage().instance()
+            .get(&symbol_short!("TREE"))
+            .expect("tree token not set");
+        token::StellarAssetClient::new(&env, &tree_token).mint(&rec.donor, &1);
+
         env.events().publish((symbol_short!("planted"), farmer), tranche1);
     }
 
@@ -306,7 +313,7 @@ mod tests {
     use super::*;
     use soroban_sdk::{testutils::Address as _, token, vec, Address, BytesN, Env};
 
-    fn setup() -> (Env, Address, Address, Address, Address, TreeEscrowClient<'static>) {
+    fn setup() -> (Env, Address, Address, Address, Address, Address, TreeEscrowClient<'static>) {
         let env = Env::default();
         env.mock_all_auths();
 
@@ -320,8 +327,11 @@ mod tests {
         let token_id = env.register_stellar_asset_contract(admin.clone());
         token::StellarAssetClient::new(&env, &token_id).mint(&donor, &10_000);
 
-        client.initialize(&admin);
-        (env, admin, donor, farmer, token_id, client)
+        // TREE token — escrow contract is the admin so it can mint
+        let tree_token_id = env.register_stellar_asset_contract(contract_id.clone());
+
+        client.initialize(&admin, &tree_token_id);
+        (env, admin, donor, farmer, token_id, tree_token_id, client)
     }
 
     fn proof(env: &Env, seed: u8) -> BytesN<32> {
@@ -330,17 +340,18 @@ mod tests {
 
     #[test]
     fn test_full_lifecycle() {
-        let (env, _admin, donor, farmer, token, client) = setup();
+        let (env, _admin, donor, farmer, token, tree_token, client) = setup();
 
         // Deposit
         client.deposit(&donor, &farmer, &token, &10_000);
         assert_eq!(client.get_record(&farmer).unwrap().status, EscrowStatus::Funded);
 
-        // Verify planting → 75% released
+        // Verify planting → 75% released, 1 TREE minted to donor
         client.verify_planting(&farmer, &proof(&env, 1));
         let rec = client.get_record(&farmer).unwrap();
         assert_eq!(rec.released, 7_500);
         assert_eq!(rec.status, EscrowStatus::Planted);
+        assert_eq!(token::Client::new(&env, &tree_token).balance(&donor), 1);
 
         // Fast-forward ledger by 6 months
         env.ledger().with_mut(|l| l.timestamp += SIX_MONTHS_SECS + 1);
@@ -355,7 +366,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "6-month survival period not yet elapsed")]
     fn test_survival_too_early_rejected() {
-        let (env, _admin, donor, farmer, token, client) = setup();
+        let (env, _admin, donor, farmer, token, _tree_token, client) = setup();
 
         client.deposit(&donor, &farmer, &token, &10_000);
         client.verify_planting(&farmer, &proof(&env, 1));
@@ -368,7 +379,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "planting already verified")]
     fn test_double_planting_rejected() {
-        let (env, _admin, donor, farmer, token, client) = setup();
+        let (env, _admin, donor, farmer, token, _tree_token, client) = setup();
 
         client.deposit(&donor, &farmer, &token, &10_000);
         client.verify_planting(&farmer, &proof(&env, 1));
@@ -377,7 +388,7 @@ mod tests {
 
     #[test]
     fn test_refund_before_planting() {
-        let (_env, _admin, donor, farmer, token, client) = setup();
+        let (_env, _admin, donor, farmer, token, _tree_token, client) = setup();
 
         client.deposit(&donor, &farmer, &token, &10_000);
         client.refund(&farmer);
@@ -387,7 +398,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "cannot refund after planting")]
     fn test_refund_after_planting_rejected() {
-        let (env, _admin, donor, farmer, token, client) = setup();
+        let (env, _admin, donor, farmer, token, _tree_token, client) = setup();
 
         client.deposit(&donor, &farmer, &token, &10_000);
         client.verify_planting(&farmer, &proof(&env, 1));
@@ -396,7 +407,7 @@ mod tests {
 
     #[test]
     fn test_batch_deposit_three_trees() {
-        let (env, _admin, donor, _farmer, token, client) = setup();
+        let (env, _admin, donor, _farmer, token, tree_token, client) = setup();
 
         // Mint enough for 3 trees
         token::StellarAssetClient::new(&env, &token).mint(&donor, &20_000);
@@ -418,12 +429,18 @@ mod tests {
         assert_eq!(client.get_record(&farmer_b).unwrap().total_amount, 3_000);
         assert_eq!(client.get_record(&farmer_c).unwrap().total_amount, 4_000);
         assert_eq!(client.get_record(&farmer_a).unwrap().status, EscrowStatus::Funded);
+
+        // Verify planting for all three → each donor gets 1 TREE (same donor here)
+        client.verify_planting(&farmer_a, &proof(&env, 1));
+        client.verify_planting(&farmer_b, &proof(&env, 2));
+        client.verify_planting(&farmer_c, &proof(&env, 3));
+        assert_eq!(token::Client::new(&env, &tree_token).balance(&donor), 3);
     }
 
     #[test]
     #[should_panic(expected = "batch exceeds maximum size")]
     fn test_batch_too_large_rejected() {
-        let (env, _admin, donor, _farmer, token, client) = setup();
+        let (env, _admin, donor, _farmer, token, _tree_token, client) = setup();
 
         // Build 51 slots
         let mut slots = Vec::new(&env);
@@ -440,7 +457,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "active escrow already exists for a farmer in this batch")]
     fn test_batch_duplicate_farmer_rejected() {
-        let (env, _admin, donor, farmer, token, client) = setup();
+        let (env, _admin, donor, farmer, token, _tree_token, client) = setup();
 
         // farmer already has an escrow from a prior deposit
         client.deposit(&donor, &farmer, &token, &1_000);
