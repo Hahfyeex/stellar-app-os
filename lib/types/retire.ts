@@ -13,6 +13,7 @@ export interface RetirementSelection {
   treeCount?: number;
   co2Offset?: number;
   plantingDate?: string;
+  region?: string;
 }
 
 export type RetirementTransactionStatus =
