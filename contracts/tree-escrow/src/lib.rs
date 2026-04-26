@@ -27,16 +27,43 @@ const SIX_MONTHS_SECS: u64 = 60 * 60 * 24 * 7 * 26;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+/// Soroban's #[contracttype] does not support Option<BytesN<32>> directly.
+/// Use a two-variant enum as a workaround.
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub enum OptProof {
+    None,
+    Some(BytesN<32>),
+}
+
+impl OptProof {
+    pub fn is_some(&self) -> bool { matches!(self, OptProof::Some(_)) }
+    pub fn unwrap(self) -> BytesN<32> {
+        match self { OptProof::Some(v) => v, OptProof::None => panic!("unwrap on None") }
+    }
+}
+
+/// Same wrapper for optional timestamps.
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub enum OptU64 {
+    None,
+    Some(u64),
+}
+
+impl OptU64 {
+    pub fn is_some(&self) -> bool { matches!(self, OptU64::Some(_)) }
+    pub fn unwrap(self) -> u64 {
+        match self { OptU64::Some(v) => v, OptU64::None => panic!("unwrap on None") }
+    }
+}
+
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
 pub enum EscrowStatus {
-    /// Funds deposited, awaiting planting proof
     Funded,
-    /// Planting verified, 75% released — awaiting 6-month survival check
     Planted,
-    /// Survival verified, 25% released — fully complete
     Completed,
-    /// Refunded to donor (only before Planted)
     Refunded,
 }
 
@@ -234,9 +261,7 @@ impl TreeEscrow {
         }
 
         let tranche2 = rec.total_amount - rec.released;
-        if tranche2 <= 0 {
-            panic!("nothing left to release");
-        }
+        if tranche2 <= 0 { panic!("nothing left to release"); }
 
         token::Client::new(&env, &rec.token).transfer(
             &env.current_contract_address(),
@@ -255,7 +280,6 @@ impl TreeEscrow {
             .publish((symbol_short!("survived"), farmer), tranche2);
     }
 
-    /// Refund full amount to donor — only allowed before planting is verified.
     pub fn refund(env: Env, farmer: Address) {
         Self::require_admin(&env);
 
@@ -283,14 +307,11 @@ impl TreeEscrow {
             .publish((symbol_short!("refund"), farmer), rec.total_amount);
     }
 
-    /// Read escrow record for a farmer.
     pub fn get_record(env: Env, farmer: Address) -> Option<EscrowRecord> {
         env.storage()
             .persistent()
             .get(&Self::record_key(&env, &farmer))
     }
-
-    // ── internal ──────────────────────────────────────────────────────────────
 
     fn record_key(env: &Env, farmer: &Address) -> soroban_sdk::Val {
         (symbol_short!("ESC"), farmer.clone()).into_val(env)
@@ -367,8 +388,18 @@ mod tests {
     }
 
     fn proof(env: &Env, seed: u8) -> BytesN<32> {
-        BytesN::from_array(env, &[seed; 32])
+        BytesN::from_array(env, &[seed; 32]).into()
     }
+
+    fn balance(env: &Env, token: &Address, who: &Address) -> i128 {
+        token::Client::new(env, token).balance(who)
+    }
+
+    fn advance_ledger(env: &Env, secs: u64) {
+        env.ledger().with_mut(|l| l.timestamp += secs);
+    }
+
+    // ── Full lifecycle with balance assertions ────────────────────────────────
 
     #[test]
     #[should_panic(expected = "contract must be tree token admin")]
@@ -401,6 +432,7 @@ mod tests {
         // Verify planting → 75% released
         client.verify_planting(&farmer, &proof(&env, 1), &42);
         let rec = client.get_record(&farmer).unwrap();
+        assert_eq!(rec.status,   EscrowStatus::Planted);
         assert_eq!(rec.released, 7_500);
         assert_eq!(rec.status, EscrowStatus::Planted);
         assert_eq!(rec.tree_count, 42);
@@ -419,6 +451,7 @@ mod tests {
         // Verify survival → remaining 25% released
         client.verify_survival(&farmer, &proof(&env, 2), &70);
         let rec = client.get_record(&farmer).unwrap();
+        assert_eq!(rec.status,   EscrowStatus::Completed);
         assert_eq!(rec.released, 10_000);
         assert_eq!(rec.status, EscrowStatus::Completed);
         assert_eq!(rec.survival_rate_percent, 70);
