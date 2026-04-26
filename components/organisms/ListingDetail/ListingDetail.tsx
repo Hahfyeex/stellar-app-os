@@ -7,18 +7,6 @@ import { Text } from '@/components/atoms/Text';
 import { Badge } from '@/components/atoms/Badge';
 import { Button } from '@/components/atoms/Button';
 import { ShoppingCart, Leaf, Calendar, ShieldCheck, AlertCircle } from 'lucide-react';
-import dynamic from 'next/dynamic';
-
-const PriceHistoryChart = dynamic(() => import('./PriceHistoryChart'), {
-  loading: () => (
-    <div className="flex h-48 w-full animate-pulse items-center justify-center rounded-xl bg-white/5">
-      <Text variant="body" className="text-white/40">
-        Loading chart...
-      </Text>
-    </div>
-  ),
-  ssr: false,
-});
 
 interface ListingDetailProps {
   listing: Listing;
@@ -119,7 +107,7 @@ export function ListingDetail({ listing }: ListingDetailProps) {
         </div>
 
         {/* Price History Chart (Lazy Loaded) */}
-        {false && <PriceHistoryChart data={listing.priceHistory} />}
+        {null}
       </div>
 
       {/* Right Column: Checkout Card */}
