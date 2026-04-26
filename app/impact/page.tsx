@@ -1,14 +1,10 @@
 import type { JSX } from 'react';
-import dynamic from 'next/dynamic';
+
 import { TreePine, Wind, Users, Globe } from 'lucide-react';
 import { ImpactStatCard } from '@/components/atoms/ImpactStatCard';
 import type { ImpactData } from '@/app/api/impact/route';
 
-// Leaflet requires browser APIs — load client-side only
-const ImpactMap = dynamic(
-  () => import('@/components/organisms/ImpactMap/ImpactMap').then((m) => m.ImpactMap),
-  { ssr: false, loading: () => <div className="h-full w-full animate-pulse rounded-xl bg-muted" /> }
-);
+import { ImpactMapWrapper } from '@/components/organisms/ImpactMap/ImpactMapWrapper';
 
 async function getImpactData(): Promise<ImpactData> {
   const base = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
@@ -55,7 +51,7 @@ export default async function ImpactPage(): Promise<JSX.Element> {
 
       {/* Map */}
       <div className="overflow-hidden rounded-xl border shadow-sm" style={{ height: '480px' }}>
-        <ImpactMap regions={regions} />
+        <ImpactMapWrapper regions={regions} />
       </div>
 
       <p className="mt-3 text-center text-xs text-muted-foreground">
