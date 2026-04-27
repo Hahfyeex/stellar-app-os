@@ -694,6 +694,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "naira-payout"
+version = "0.1.0"
+dependencies = [
+ "soroban-sdk",
+]
+
+[[package]]
 name = "nullifier-registry"
 version = "0.1.0"
 dependencies = [

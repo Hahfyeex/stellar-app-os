@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 
 import { TreePine, Wind, Users, Globe } from 'lucide-react';
 import { ImpactStatCard } from '@/components/atoms/ImpactStatCard';
+import { ImpactMapClient } from '@/components/organisms/ImpactMap/ImpactMapClient';
 import type { ImpactData } from '@/app/api/impact/route';
 
 import { ImpactMapWrapper } from '@/components/organisms/ImpactMap/ImpactMapWrapper';
@@ -52,6 +53,7 @@ export default async function ImpactPage(): Promise<JSX.Element> {
       {/* Map */}
       <div className="overflow-hidden rounded-xl border shadow-sm" style={{ height: '480px' }}>
         <ImpactMapWrapper regions={regions} />
+        <ImpactMapClient regions={regions} />
       </div>
 
       <p className="mt-3 text-center text-xs text-muted-foreground">
